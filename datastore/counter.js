@@ -16,15 +16,18 @@ const zeroPaddedNumber = (num) => {
 };
 
 const readCounter = (callback) => {
+  //readCOunter first then write
+  //may used .then
   fs.readFile(exports.counterFile, (err, fileData) => {
     if (err) {
       callback(null, 0);
     } else {
       callback(null, Number(fileData));
-    }
+    } 
   });
 };
 
+//both are asynch
 const writeCounter = (count, callback) => {
   var counterString = zeroPaddedNumber(count);
   fs.writeFile(exports.counterFile, counterString, (err) => {
@@ -38,9 +41,17 @@ const writeCounter = (count, callback) => {
 
 // Public API - Fix this function //////////////////////////////////////////////
 
-exports.getNextUniqueId = () => {
-  counter = counter + 1;
-  return zeroPaddedNumber(counter);
+exports.getNextUniqueId = (callback) => {
+  readCounter(function(err, data){
+    // if(err){ throw('error ')}
+    let newId = data + 1;
+    writeCounter(newId, function(err, data){
+      //this data ref counterString on line 32
+      if(err){throw('error')}
+      callback(null, data);
+    })
+  })
+  // return zeroPaddedNumber(counter);
 };
 
 

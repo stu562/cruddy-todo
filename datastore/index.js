@@ -2,16 +2,36 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('underscore');
 const counter = require('./counter');
+// const async = require('async');
 
 var items = {};
 
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  var id = counter.getNextUniqueId();
-  items[id] = text;
-  callback(null, { id, text });
+  //data is the new id
+  counter.getNextUniqueId(function(err, data){
+    fs.writeFile(exports.dataDir + `/${data}.txt`, text, function(err){
+      if(err) {
+        callback(err, null)
+      } else {
+        callback(null, { id: data, text }); 
+      }
+    })
+  });
+  // items[id] = text;//don't need
 };
+
+// exports.create = (text, callback) =>{
+//   var id = counter.getNextUniqueId();
+//   items[id] = text;
+//   fs.readFile('counter.txt', (err, data)=>{
+//     if(err) throw error;
+//     return callback(null, data);
+    
+//   })
+//   // (callback(null, { id, text }));
+// }
 
 exports.readAll = (callback) => {
   var data = _.map(items, (text, id) => {
@@ -19,6 +39,12 @@ exports.readAll = (callback) => {
   });
   callback(null, data);
 };
+// exports.readAll = async(callback) => {
+//   var data = _.map(items, (text, id) => {
+//     return { id, text };
+//   });
+//   await new Promise(callback(null, data));
+// };
 
 exports.readOne = (id, callback) => {
   var text = items[id];
