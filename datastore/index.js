@@ -26,41 +26,62 @@ exports.create = (text, callback) => {
 };
 exports.readAll = (callback) => {
   //data is the new id
+  // function promised(){
+  //     return new Promise((resolve, reject) => {
+  //     fs.readdir(exports.dataDir, (err, data)=>{
+  //       if(err){
+  //         reject(err);
+  //       } 
+  //       resolve(data);
+  //     })
+  //   })
+  // }
+  
+  // promised()
+  //   .then(data => data.map(filename => {
+  //     let fileId = filename.slice(0, filename.length-4);
+  //     return filename.text;
+  //   }))
+  //   .catch(console.log('There is an error!'))
+
   fs.readdir(exports.dataDir, function(err, data){
     if(err){
       callback(err, null);
     } else{
-      console.log(data);
-      callback(null, data.map(filename=>{
-        let fileId = filename.slice(0, filename.length - 4);
-        return {id: fileId, text: fileId };
-      }));
-      //want to look like dis ===>   [{ id: data, text }];
-            
+      Promise.all(
+        data.map(filename=>{
+          let fileId = filename.slice(0, filename.length - 4);
+          return new Promise((resolve, reject) => {
+            exports.readOne(fileId, (err, data)=>{
+              if(err){
+                reject(err);
+              } else { 
+                resolve(data);
+              }
+            })
+          })
+        })
+      )
+      .then(data => callback(null, data))
+      .catch(err => callback(err, null));         
     }
   });
 };
 
-
-// exports.create = (text, callback) =>{
-//   var id = counter.getNextUniqueId();
-//   items[id] = text;
-//   fs.readFile('counter.txt', (err, data)=>{
-//     if(err) throw error;
-//     return callback(null, data);
-    
+// function httpAsync () {
+//   return new Promise((resolve,reject) => {
+//     http.get('www.google.com', (err, data) => {
+//       if (err) {
+//         reject(err)
+//       } 
+//       resolve(data)
+//     })
 //   })
-//   // (callback(null, { id, text }));
 // }
 
-// exports.readAll = (callback) => {
-//   var data = _.map(items, (text, id) => {
-//     return { id, text };
-//   });
-//   callback(null, data);
-// };
-
-//implement onclick function? when press edit 
+// httpAsync()
+//   .then(data => data)
+//   .catch()
 
 exports.readOne = (id, callback) => {
   fs.readFile(exports.dataDir+`/${id}.txt`, 'utf-8', (err, data)=>{
@@ -72,36 +93,53 @@ exports.readOne = (id, callback) => {
   })
 }
 
-
-// exports.readOne = (id, callback) => {
-//   var text = items[id];
-//   if (!text) {
-//     callback(new Error(`No item with id: ${id}`));
-//   } else {
-//     callback(null, { id, text }); //readFile
-//   }
-// };
-
 exports.update = (id, text, callback) => {
-  var item = items[id];
-  if (!item) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    items[id] = text;
-    callback(null, { id, text }); //fs.exists, fs.write
-  }
+  fs.access(exports.dataDir+`/${id}.txt`, (err, data)=>{
+    if(err){      
+      console.log( `${id} not found`);
+    } else {
+      fs.writeFile(exports.dataDir+`/${id}.txt`, text, (err, data)=>{
+        if(err){
+          // console.log('error')
+
+          callback(err, null)
+        } else {
+          callback(null, text);
+        }
+      })
+    }
+  })
 };
+
 
 exports.delete = (id, callback) => {
-  var item = items[id];
-  delete items[id];
-  if (!item) {
-    // report an error if item not found
-    callback(new Error(`No item with id: ${id}`)); //fs.unlinked
-  } else {
-    callback();
-  }
+  fs.access(exports.dataDir+`/${id}.txt`, (err, data)=>{
+    if(err){      
+      callback(err, null);
+    } else {
+      fs.unlink(exports.dataDir+`/${id}.txt`, (err, data)=>{
+        if(err){
+          // console.log('error')
+          callback(err, null)
+        } else {
+          callback(null, data);
+        }
+      })
+    }
+  })
 };
+
+
+// exports.delete = (id, callback) => {
+//   var item = items[id];
+//   delete items[id];
+//   if (!item) {
+//     // report an error if item not found
+//     callback(new Error(`No item with id: ${id}`)); //fs.unlinked
+//   } else {
+//     callback();
+//   }
+// };
 
 // Config+Initialization code -- DO NOT MODIFY /////////////////////////////////
 
