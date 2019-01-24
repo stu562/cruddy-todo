@@ -44,6 +44,7 @@ $(() => {
 
   $('#todos').delegate('button', 'click', (event) => {
     var id = $(event.target.parentNode).data('id');
+    
     if ($(event.target).data('action') === 'edit') {
       Todo.readOne(id, (todo) => {
         var updatedText = prompt('Change to?', todo.text);
